@@ -21,7 +21,9 @@
 #include <QFile>
 #include <QDBusConnection>
 #include <QDBusInterface>
+#include <QIcon>
 #include <QPixmapCache>
+#include <QSettings>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 
@@ -57,6 +59,12 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("cutefish-launcher"));
+
+    QSettings themeSettings(QStringLiteral("cutefishos"), QStringLiteral("theme"));
+    QString currentIconTheme = themeSettings.value(QStringLiteral("IconTheme"), QStringLiteral("Cutefish")).toString();
+    if (!currentIconTheme.isEmpty()) {
+        QIcon::setThemeName(currentIconTheme);
+    }
 
     QPixmapCache::setCacheLimit(2048);
 

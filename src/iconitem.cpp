@@ -4,6 +4,7 @@
 #include <QQuickWindow>
 #include <QApplication>
 #include <QIcon>
+#include <QFileInfo>
 
 IconItem::IconItem(QQuickItem *parent)
     : QQuickItem(parent)
@@ -58,9 +59,14 @@ QSGNode *IconItem::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNode
     if (!textureNode) {
         delete oldNode;
         textureNode = new QSGSimpleTextureNode;
-        textureNode->setTexture(window()->createTextureFromImage(m_iconPixmap.toImage(), QQuickWindow::TextureCanUseAtlas));
     }
 
+    QImage img = m_iconPixmap.toImage().convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QSGTexture *texture = window()->createTextureFromImage(img, QQuickWindow::TextureHasAlphaChannel);
+    if (texture) {
+        texture->setMipmapFiltering(QSGTexture::Linear);
+    }
+    textureNode->setTexture(texture);
     textureNode->setFiltering(smooth() ? QSGTexture::Linear : QSGTexture::Nearest);
 
     // Size changed
@@ -95,7 +101,9 @@ void IconItem::updatePolish()
 
 void IconItem::refresh()
 {
+    m_iconPixmap = QPixmap();
     polish();
+    update();
 }
 
 void IconItem::loadPixmap()
@@ -112,18 +120,17 @@ void IconItem::loadPixmap()
         return;
     }
 
+    const qreal dpr = window() ? window()->effectiveDevicePixelRatio() : qApp->devicePixelRatio();
     QString sourceString = m_source.toString();
 
     if (m_source.canConvert<QIcon>()) {
         QIcon icon = m_source.value<QIcon>();
-        m_iconPixmap = icon.pixmap(QSize(size * qApp->devicePixelRatio(),
-                                         size * qApp->devicePixelRatio()));
-        m_iconPixmap.setDevicePixelRatio(qApp->devicePixelRatio());
+        m_iconPixmap = icon.pixmap(QSize(size * dpr, size * dpr));
+        m_iconPixmap.setDevicePixelRatio(dpr);
     } else if (m_source.canConvert<QImage>()) {
         QImage image = m_source.value<QImage>();
-        m_iconPixmap = QPixmap::fromImage(image).scaled(QSize(size * qApp->devicePixelRatio(),
-                                                              size * qApp->devicePixelRatio()));
-        m_iconPixmap.setDevicePixelRatio(qApp->devicePixelRatio());
+        m_iconPixmap = QPixmap::fromImage(image).scaled(QSize(size * dpr, size * dpr), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        m_iconPixmap.setDevicePixelRatio(dpr);
     } else if (!m_source.isNull()) {
         QString localFile;
 
@@ -137,20 +144,25 @@ void IconItem::loadPixmap()
             localFile = sourceString;
 
         if (!localFile.isEmpty()) {
-            m_iconPixmap.load(localFile);
-            if (!m_iconPixmap.isNull()) {
-                m_iconPixmap = m_iconPixmap.scaled(QSize(size * qApp->devicePixelRatio(),
-                                                         size * qApp->devicePixelRatio()));
-                m_iconPixmap.setDevicePixelRatio(qApp->devicePixelRatio());
+            QString baseName = QFileInfo(localFile).completeBaseName();
+            if (!baseName.isEmpty() && QIcon::hasThemeIcon(baseName)) {
+                QIcon icon = QIcon::fromTheme(baseName);
+                m_iconPixmap = icon.pixmap(QSize(size * dpr, size * dpr));
+                m_iconPixmap.setDevicePixelRatio(dpr);
+            } else {
+                m_iconPixmap.load(localFile);
+                if (!m_iconPixmap.isNull()) {
+                    m_iconPixmap = m_iconPixmap.scaled(QSize(size * dpr, size * dpr), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    m_iconPixmap.setDevicePixelRatio(dpr);
+                }
             }
         }
     }
 
     if (m_iconPixmap.isNull()) {
         QIcon icon = QIcon::fromTheme(sourceString, QIcon::fromTheme("application-x-desktop"));
-        m_iconPixmap = icon.pixmap(QSize(size * qApp->devicePixelRatio(),
-                                         size * qApp->devicePixelRatio()));
-        m_iconPixmap.setDevicePixelRatio(qApp->devicePixelRatio());
+        m_iconPixmap = icon.pixmap(QSize(size * dpr, size * dpr));
+        m_iconPixmap.setDevicePixelRatio(dpr);
     }
 
     update();

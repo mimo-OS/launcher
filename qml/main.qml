@@ -280,10 +280,24 @@ Item {
                 }
 
                 background: Rectangle {
-                    opacity: 0.2
-                    radius: textField.height * 0.2
-                    color: "white"
-                    border.width: 0
+                    radius: textField.height / 2
+                    color: FishUI.Theme.darkMode ? Qt.rgba(0.11, 0.13, 0.18, 0.85)
+                                                 : Qt.rgba(0.91, 0.93, 0.97, 0.85)
+                    border.width: 1 / FishUI.Dpi.ratio
+                    border.color: FishUI.Theme.darkMode ? Qt.rgba(1, 1, 1, 0.22)
+                                                        : Qt.rgba(1, 1, 1, 0.92)
+                    antialiasing: true
+
+                    // Inner Specular Glass Rim
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        radius: textField.height / 2 - 1
+                        color: "transparent"
+                        border.width: 1 / FishUI.Dpi.ratio
+                        border.color: FishUI.Theme.darkMode ? Qt.rgba(1, 1, 1, 0.10)
+                                                            : Qt.rgba(1, 1, 1, 0.50)
+                    }
                 }
 
                 Timer {

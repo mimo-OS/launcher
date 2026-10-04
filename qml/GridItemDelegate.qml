@@ -99,6 +99,13 @@ Item {
         source: model.iconName
         visible: !dragStarted
 
+        Connections {
+            target: launcher
+            function onIconThemeChanged() {
+                icon.refresh()
+            }
+        }
+
         ColorOverlay {
             id: colorOverlay
             anchors.fill: icon
