@@ -59,6 +59,7 @@ signals:
     void screenRectChanged();
     void showedChanged();
     void marginsChanged();
+    void iconThemeChanged();
 
 private slots:
     void updateMargins();

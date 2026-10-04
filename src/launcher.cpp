@@ -23,6 +23,8 @@
 
 #include <QApplication>
 #include <QDBusConnection>
+#include <QIcon>
+#include <QSettings>
 #include <QDBusServiceWatcher>
 #include <QPixmapCache>
 #include <QQmlContext>
@@ -79,6 +81,16 @@ Launcher::Launcher(bool firstShow, QQuickView *w)
 
     connect(qApp, &QApplication::primaryScreenChanged, this, [=] { onGeometryChanged(); });
     connect(this, &QQuickView::activeChanged, this, &Launcher::onActiveChanged);
+
+    // Listen to DBus iconThemeChanged signal from com.cutefish.Services.Appearance
+    QDBusConnection::sessionBus().connect(
+        QStringLiteral("com.cutefish.Services.Appearance"),
+        QStringLiteral("/Appearance"),
+        QStringLiteral("com.cutefish.Services.Appearance"),
+        QStringLiteral("iconThemeChanged"),
+        this,
+        SLOT(clearPixmapCache())
+    );
 }
 
 int Launcher::leftMargin() const
@@ -141,7 +153,13 @@ bool Launcher::isPinedDock(const QString &desktop)
 
 void Launcher::clearPixmapCache()
 {
+    QSettings settings(QStringLiteral("cutefishos"), QStringLiteral("theme"));
+    QString newTheme = settings.value(QStringLiteral("IconTheme"), QStringLiteral("Cutefish")).toString();
+    if (!newTheme.isEmpty()) {
+        QIcon::setThemeName(newTheme);
+    }
     QPixmapCache::clear();
+    emit iconThemeChanged();
 }
 
 QRect Launcher::screenRect()

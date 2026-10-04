@@ -28,6 +28,7 @@
 #include <QRegularExpression>
 #include <QFileSystemWatcher>
 #include <QStandardPaths>
+#include <utility>
 #include <QScopedPointer>
 #include <QDirIterator>
 #include <QDebug>
@@ -151,7 +152,7 @@ void LauncherModel::search(const QString &key)
     m_mode = key.isEmpty() ? NormalMode : SearchMode;
     m_searchItems.clear();
 
-    for (const AppItem &item : qAsConst(m_appItems)) {
+    for (const AppItem &item : std::as_const(m_appItems)) {
         const QString &name = item.name;
         const QString &fileName = item.id;
 
@@ -220,7 +221,7 @@ int LauncherModel::findById(const QString &id)
 void LauncherModel::refresh(LauncherModel *manager)
 {
     QStringList addedEntries;
-    for (const AppItem &item : qAsConst(manager->m_appItems))
+    for (const AppItem &item : std::as_const(manager->m_appItems))
         addedEntries.append(item.id);
 
     QStringList allEntries;
@@ -238,7 +239,7 @@ void LauncherModel::refresh(LauncherModel *manager)
         QMetaObject::invokeMethod(manager, "addApp", Q_ARG(QString, fileName));
     }
 
-    for (const AppItem &item : qAsConst(manager->m_appItems))
+    for (const AppItem &item : std::as_const(manager->m_appItems))
         if (!allEntries.contains(item.id))
             QMetaObject::invokeMethod(manager, "removeApp", Q_ARG(QString, item.id));
 

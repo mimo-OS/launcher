@@ -35,12 +35,9 @@ bool ProcessProvider::startDetached(const QString &exec, QStringList args)
                          "com.cutefish.Session", QDBusConnection::sessionBus());
 
     if (iface.isValid()) {
-        iface.asyncCall("launch", exec, args).waitForFinished();
+        iface.asyncCall("launch", exec, args);
         return true;
-    } else {
-        QProcess process;
-        process.startDetached(exec, args);
     }
 
-    return false;
+    return QProcess::startDetached(exec, args);
 }
