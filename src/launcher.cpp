@@ -55,7 +55,6 @@ Launcher::Launcher(bool firstShow, QQuickView *w)
 
     setSource(QUrl(QStringLiteral("qrc:/qml/main.qml")));
     setTitle(tr("Launcher"));
-    setVisible(true);
     setVisible(firstShow);
 
     // Let the animation in qml be hidden after the execution is complete
@@ -68,11 +67,11 @@ Launcher::Launcher(bool firstShow, QQuickView *w)
         connect(&m_dockInterface, SIGNAL(primaryGeometryChanged()), this, SLOT(updateMargins()));
         connect(&m_dockInterface, SIGNAL(directionChanged()), this, SLOT(updateMargins()));
     } else {
-        QDBusServiceWatcher *watcher = new QDBusServiceWatcher("com.cutefish.Dock",
+        QDBusServiceWatcher *watcher = new QDBusServiceWatcher(QStringLiteral("com.cutefish.Dock"),
                                                                QDBusConnection::sessionBus(),
-                                                               QDBusServiceWatcher::WatchForUnregistration,
+                                                               QDBusServiceWatcher::WatchForRegistration,
                                                                this);
-        connect(watcher, &QDBusServiceWatcher::serviceUnregistered, this, [=] {
+        connect(watcher, &QDBusServiceWatcher::serviceRegistered, this, [=] {
             updateMargins();
             connect(&m_dockInterface, SIGNAL(primaryGeometryChanged()), this, SLOT(updateMargins()));
             connect(&m_dockInterface, SIGNAL(directionChanged()), this, SLOT(updateMargins()));
