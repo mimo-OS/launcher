@@ -37,12 +37,12 @@
 
 static QByteArray detectDesktopEnvironment()
 {
-    const QByteArray desktop = qgetenv("XDG_CURRENT_DESKTOP");
+    static const QByteArray desktop = []() {
+        const QByteArray env = qgetenv("XDG_CURRENT_DESKTOP");
+        return env.isEmpty() ? QByteArray("UNKNOWN") : env.toUpper();
+    }();
 
-    if (!desktop.isEmpty())
-        return desktop.toUpper();
-
-    return QByteArray("UNKNOWN");
+    return desktop;
 }
 
 LauncherModel::LauncherModel(QObject *parent)
@@ -348,9 +348,12 @@ void LauncherModel::onFileChanged(const QString &path)
     if (appName.isEmpty())
         appName = desktop.value("Name").toString();
 
-    appExec.remove(QRegularExpression("%."));
-    appExec.remove(QRegularExpression("^\""));
-    appExec = appExec.replace("\"", "");
+    static const QRegularExpression fieldCodeRegex(QStringLiteral("%."));
+    static const QRegularExpression leadQuoteRegex(QStringLiteral("^\""));
+
+    appExec.remove(fieldCodeRegex);
+    appExec.remove(leadQuoteRegex);
+    appExec.remove(QLatin1Char('"'));
     appExec = appExec.simplified();
     item.name = appName;
     item.genericName = desktop.value("Comment").toString();
@@ -387,10 +390,12 @@ void LauncherModel::addApp(const QString &fileName)
     if (appName.isEmpty())
         appName = desktop.value("Name").toString();
 
-    appExec.remove(QRegularExpression("%."));
-    appExec.remove(QRegularExpression("^\""));
-    // appExec.remove(QRegularExpression(" *$"));
-    appExec = appExec.replace("\"", "");
+    static const QRegularExpression fieldCodeRegex(QStringLiteral("%."));
+    static const QRegularExpression leadQuoteRegex(QStringLiteral("^\""));
+
+    appExec.remove(fieldCodeRegex);
+    appExec.remove(leadQuoteRegex);
+    appExec.remove(QLatin1Char('"'));
     appExec = appExec.simplified();
 
     // 存在需要更新信息
@@ -423,8 +428,7 @@ void LauncherModel::addApp(const QString &fileName)
     }
 
     // Update desktop files.
-    if (!m_fileWatcher->files().contains(fileName))
-        m_fileWatcher->addPath(fileName);
+    m_fileWatcher->addPath(fileName);
 }
 
 void LauncherModel::removeApp(const QString &fileName)
@@ -440,6 +444,5 @@ void LauncherModel::removeApp(const QString &fileName)
     delaySave();
 
     // Remove
-    if (m_fileWatcher->files().contains(fileName))
-        m_fileWatcher->removePath(fileName);
+    m_fileWatcher->removePath(fileName);
 }
