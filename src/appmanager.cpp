@@ -38,5 +38,6 @@ void AppManager::uninstall(const QString &desktopFile)
 
 bool AppManager::isCutefishOS()
 {
-    return QFile::exists("/etc/cutefishos");
+    return QFile::exists("/etc/mimo-os") || QFile::exists("/etc/mimo") ||
+           QFile::exists("/etc/cutefishos") || QFile::exists("/etc/cutefish");
 }
